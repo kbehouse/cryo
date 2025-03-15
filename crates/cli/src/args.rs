@@ -264,6 +264,10 @@ pub struct Args {
     /// Event signature for log decoding
     #[arg(long, value_name = "tracer", help_heading = "Dataset-specific Options")]
     pub js_tracer: Option<String>,
+
+    /// SQL query (address etc. need full lowercase)
+    #[arg(long, value_name = "SQL", visible_alias = "query", help_heading = "Output Options")]
+    pub sql_query: Option<String>,
 }
 
 impl Args {

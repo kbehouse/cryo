@@ -65,6 +65,7 @@ use cryo_freeze::collect;
         verbose = false,
         no_verbose = false,
         event_signature = None,
+        sql_query = None,
     )
 )]
 #[allow(clippy::too_many_arguments)]
@@ -127,6 +128,7 @@ pub fn _collect(
     verbose: bool,
     no_verbose: bool,
     event_signature: Option<String>,
+    sql_query: Option<String>,
 ) -> PyResult<&PyAny> {
     if let Some(command) = command {
         pyo3_asyncio::tokio::future_into_py(py, async move {
@@ -193,6 +195,7 @@ pub fn _collect(
             verbose,
             no_verbose,
             event_signature,
+            sql_query,
         };
         pyo3_asyncio::tokio::future_into_py(py, async move {
             match run_collect(args).await {
@@ -202,7 +205,7 @@ pub fn _collect(
             }
         })
     } else {
-        return Err(PyErr::new::<PyTypeError, _>("must specify datatype or command"))
+        return Err(PyErr::new::<PyTypeError, _>("must specify datatype or command"));
     }
 }
 
