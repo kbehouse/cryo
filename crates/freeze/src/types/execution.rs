@@ -25,6 +25,8 @@ pub struct ExecutionEnv {
     pub t_end: Option<SystemTime>,
     /// report directory
     pub report_dir: Option<PathBuf>,
+    /// sql query
+    pub sql_query: Option<String>,
 }
 
 impl ExecutionEnv {
@@ -67,6 +69,7 @@ pub struct ExecutionEnvBuilder {
     t_start: SystemTime,
     t_end: Option<SystemTime>,
     report_dir: Option<PathBuf>,
+    sql_query: Option<String>,
 }
 
 impl Default for ExecutionEnvBuilder {
@@ -82,6 +85,7 @@ impl Default for ExecutionEnvBuilder {
             t_start: SystemTime::now(),
             t_end: None,
             report_dir: None,
+            sql_query: None,
         }
     }
 }
@@ -134,6 +138,12 @@ impl ExecutionEnvBuilder {
         self
     }
 
+    /// sql query
+    pub fn sql_query(mut self, sql_query: Option<String>) -> Self {
+        self.sql_query = sql_query;
+        self
+    }
+
     /// build final output
     pub fn build(self) -> ExecutionEnv {
         ExecutionEnv {
@@ -147,6 +157,7 @@ impl ExecutionEnvBuilder {
             t_start: self.t_start,
             t_end: self.t_end,
             report_dir: self.report_dir,
+            sql_query: self.sql_query,
         }
     }
 }

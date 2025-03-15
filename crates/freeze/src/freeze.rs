@@ -4,6 +4,7 @@ use crate::{
 };
 use chrono::{DateTime, Local};
 use futures::{stream::FuturesUnordered, StreamExt};
+use polars::{prelude::IntoLazy, sql::SQLContext};
 use std::{
     collections::{HashMap, HashSet},
     path::PathBuf,
@@ -42,7 +43,7 @@ pub async fn freeze(
 
     // check dry run
     if env.dry {
-        return Ok(None)
+        return Ok(None);
     };
 
     // check if empty
@@ -51,7 +52,7 @@ pub async fn freeze(
         if env.verbose >= 1 {
             summaries::print_cryo_conclusion(&results, query, env)
         }
-        return Ok(Some(results))
+        return Ok(Some(results));
     }
 
     // create initial report
@@ -95,7 +96,7 @@ fn get_payloads(
             let paths = sink.get_paths(query, &partition, Some(vec![datatype.clone()]))?;
             if !sink.overwrite && paths.values().all(|path| path.exists()) {
                 skipping.push(partition);
-                continue
+                continue;
             }
 
             // check for path collisions
@@ -105,7 +106,7 @@ fn get_payloads(
             } else {
                 let message =
                     format!("output path collision: {:?}", paths_set.intersection(&all_paths));
-                return Err(err(&message))
+                return Err(err(&message));
             };
 
             let payload = (
@@ -187,6 +188,36 @@ async fn freeze_partition(payload: PartitionPayload) -> Result<u64, CollectError
         let path = paths.get(&datatype).ok_or_else(|| {
             CollectError::CollectError("could not get path for datatype".to_string())
         })?;
+
+        if env.sql_query.is_some() {
+            // Create an SQL execution context
+            let mut ctx = SQLContext::new();
+
+            // Register the DataFrame as a table
+            let table_name = datatype.name();
+            ctx.register(table_name.as_str(), df.lazy());
+
+            let sql_query = env.sql_query.as_ref().unwrap();
+
+            // Try to execute the query
+            match ctx.execute(sql_query) {
+                Ok(lazy_frame) => match lazy_frame.collect() {
+                    Ok(result_df) => df = result_df,
+                    Err(e) => {
+                        return Err(CollectError::CollectError(format!(
+                            "Error executing SQL query on {}: {}. This may be because the query references columns that don't exist in the dataset.",
+                            table_name, e
+                        )));
+                    }
+                },
+                Err(e) => {
+                    return Err(CollectError::CollectError(format!(
+                        "Invalid SQL query for {}: {}.",
+                        table_name, e
+                    )));
+                }
+            }
+        }
         let result = dataframes::df_to_file(&mut df, path, &sink);
         result.map_err(|_| CollectError::CollectError("error writing file".to_string()))?
     }

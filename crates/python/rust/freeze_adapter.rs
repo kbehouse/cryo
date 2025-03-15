@@ -62,6 +62,7 @@ use cryo_cli::{run, Args};
         verbose = false,
         no_verbose = false,
         event_signature = None,
+        sql_query = None,
     )
 )]
 #[allow(clippy::too_many_arguments)]
@@ -124,6 +125,7 @@ pub fn _freeze(
     verbose: bool,
     no_verbose: bool,
     event_signature: Option<String>,
+    sql_query: Option<String>,
 ) -> PyResult<&PyAny> {
     if let Some(command) = command {
         freeze_command(py, command)
@@ -185,6 +187,7 @@ pub fn _freeze(
             verbose,
             no_verbose,
             event_signature,
+            sql_query,
         };
 
         pyo3_asyncio::tokio::future_into_py(py, async move {
@@ -212,7 +215,7 @@ pub fn _freeze(
             }
         })
     } else {
-        return Err(PyErr::new::<PyTypeError, _>("must specify datatypes or command"))
+        return Err(PyErr::new::<PyTypeError, _>("must specify datatypes or command"));
     }
 }
 

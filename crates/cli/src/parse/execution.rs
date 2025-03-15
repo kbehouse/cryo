@@ -17,7 +17,8 @@ pub(crate) fn parse_execution_env(args: &Args, n_tasks: u64) -> Result<Execution
         .verbose(verbose)
         .report(!args.no_report)
         .report_dir(args.report_dir.clone())
-        .args(args_str);
+        .args(args_str)
+        .sql_query(args.sql_query.clone());
 
     let builder = if !args.no_verbose {
         builder
